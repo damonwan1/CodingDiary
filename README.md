@@ -13,3 +13,12 @@
     * [TCP/IP与Http的区别和关系？](网络/协议/TCP-IP与HTTP.md)
     * [WebSocket与Socket的区别？](网络/协议/WebSocket-Socket.md)
     * [SOAP是什么？](网络/协议/SOAP.md)
+* 算法系列
+  * 常用方法
+    * [常用方法汇总？](算法/常见方法汇总.md)
+
+* 后端系列
+  * Redis
+  * Java
+    * 代码
+      * [Pair？](后端/Java/代码/Pair.md)
