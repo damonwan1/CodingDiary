@@ -23,11 +23,14 @@ __WebSocket protocol 是HTML5一种新的协议。它实现了浏览器与服务
 #### 不同点
 * 1. WebSocket是双向通信协议，模拟Socket协议，可以双向发送或接受信息。HTTP是单向的。
 * 2. WebSocket是需要握手进行建立连接的。
+* 3..HTTP的长连接一般就只能坚持一分钟而已，而且是浏览器决定的，你的页面很难控制这个行为。Socket连接就可以维持很久，几天、数月都有可能，只要网络不断、程序不结束，而且是可以编程灵活控制的。
 #### 联系
 * WebSocket在建立握手时，数据是通过HTTP传输的。但是建立之后，在真正传输时候是不需要HTTP协议的。
 
 ### WebSocket与Socket的关系
-* Socket其实并不是一个协议，而是为了方便使用TCP或UDP而抽象出来的一层，是位于应用层和传输控制层之间的一组接口。
+* Socket其实并不是一个协议，而是为了方便使用TCP或UDP而抽象出来的一层，是位于应用层和传输控制层之间的一组接口。实际上就是TCP/IP网络的API。(港口码头/车站)Socket是应用层与TCP/IP协议族通信的中间软件抽象层，它是一组接口。socket是在应用层和传输层之间的一个抽象层，它把TCP/IP层复杂的操作抽象为几个简单的接口供应用层调用已实现进程在网络中通信。
+
+*Socket 是对 TCP/IP 协议的封装，Socket 只是个接口不是协议，通过 Socket 我们才能使用 TCP/IP 协议，除了 TCP，也可以使用 UDP 协议来传递数据。创建 Socket 连接的时候，可以指定传输层协议，可以是 TCP 或者 UDP，当用 TCP 连接，该Socket就是个TCP连接
 
 * Socket是应用层与TCP/IP协议族通信的中间软件抽象层，它是一组接口。在设计模式中，Socket其实就是一个门面模式，它把复杂的TCP/IP协议族隐藏在Socket接口后面，对用户来说，一组简单的接口就是全部，让Socket去组织数据，以符合指定的协议。
 
@@ -35,3 +38,6 @@ __WebSocket protocol 是HTML5一种新的协议。它实现了浏览器与服务
 
 * WebSocket则是一个典型的应用层协议。
 
+## 详细教程链接
+* [Socket原理大全](http://c.biancheng.net/view/2123.html)
+* [Socket编程简单案例](https://baijiahao.baidu.com/s?id=1639741950362007456&wfr=spider&for=pc)
