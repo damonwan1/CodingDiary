@@ -39,7 +39,7 @@ __WebSocket protocol 是HTML5一种新的协议。它实现了浏览器与服务
 * WebSocket则是一个典型的应用层协议。
 
 ### SOcket编程流程
-![流程图](https://img-blog.csdnimg.cn/20190718154556909.png)
+![流程图](http://img-blog.csdnimg.cn/20190718154556909.png)
 
 ## 详细教程链接
 * [Socket原理大全](http://c.biancheng.net/view/2123.html)
