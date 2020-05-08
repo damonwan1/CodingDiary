@@ -95,6 +95,7 @@ fd拷贝	每次调用select，都需要把fd集合从用户态拷贝到内核态
 
 参考：
 [链接1](https://blog.csdn.net/daaikuaichuan/article/details/83862311)
-[链接1](https://www.jianshu.com/p/397449cadc9a)
+[链接2](https://www.jianshu.com/p/397449cadc9a)
+https://blog.csdn.net/u011671986/article/details/79449853
 
 
