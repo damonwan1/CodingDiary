@@ -93,6 +93,8 @@ IO效率	每次调用都进行线性遍历，时间复杂度为O(n)	每次调用
 fd拷贝	每次调用select，都需要把fd集合从用户态拷贝到内核态	每次调用poll，都需要把fd集合从用户态拷贝到内核态	调用epoll_ctl时拷贝进内核并保存，之后每次epoll_wait不拷贝
 ```
 
+并不是任何时候都是epoll效率最高，比如说在连接数少且IO繁忙的情况下，poll/select可能更好
+
 参考：
 [链接1](https://blog.csdn.net/daaikuaichuan/article/details/83862311)
 [链接2](https://www.jianshu.com/p/397449cadc9a)
