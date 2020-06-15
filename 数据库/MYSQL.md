@@ -303,3 +303,5 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
     * 强制顺序加select straight_join
 * 当创建一张表的时候，要不要创建主键？
     * 如果不用分布式，就使用主键，建议主键自增（不自增插入就会导致页分裂，维护困难）；
+* 雪花算法/雪花模型（分布式id）/分布式
+* 前缀索引
