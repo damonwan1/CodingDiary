@@ -1,13 +1,39 @@
-## BIO/NIO(select-poll-epoll)/AIO
+
+<!-- TOC -->
+
+- 1. BIO/NIO(select-poll-epoll)/AIO
+    - 1.1. Linux操作系统前置基础
+        - 1.1.1. Linux空间划分
+    - 1.2. BIO(Blocking IO)
+    - 1.3. NIO(Non Blocking IO)
+        - 1.3.1. select、epoll
+        - 1.3.2. epoll
+    - 1.4. 基础概念
+    - 1.5. Select
+    - 1.6. Epoll
+        - 1.6.1. epoll步骤
+        - 1.6.2. 底层数据结构
+        - 1.6.3. 边沿触发vs水平触发
+            - 1.6.3.1. 水平触发(level-triggered)
+            - 1.6.3.2. 边沿触发(edge-triggered)
+    - 1.7. 区别
+    - 1.8. AIO（NIO2.0）
+
+<!-- /TOC -->
+---
+
+## 1. BIO/NIO(select-poll-epoll)/AIO
 ---
 * 为什么学习IO？
         * IO无处不在，epoll用在tomcat、redis、kafka、nginx
         * IO -> IO Socket -> BIO -> NIO ->多路复用NIO -> netty
-### Linux操作系统前置基础
+
+### 1.1. Linux操作系统前置基础
 * 操作系统的基础是决定理解IO本质的关键
 * Linux中，很多IO设备比如：网卡、键盘、鼠标、硬盘等
 * 不管是哪种类型IO，建立都是：创建一个socket、给socket绑定一个端口、开始监听这个socket
-#### Linux空间划分
+
+#### 1.1.1. Linux空间划分
 * Linux内存中分为两部分：
         * 内核空间：Kernel，运行着一些内核程序
         * 用户空间：运行着很多个用户进程
@@ -16,24 +42,26 @@
 * 系统调用产生中断：int x80
 * 进程一旦很多，那么上下文切换就会很耗时；
 
-### BIO(Blocking IO)
+### 1.2. BIO(Blocking IO)
 * 同步阻塞模型，一个客户端连接对应**一个处理线程**
 * 缺点：
         * 1、IO代码里accepet、read操作是阻塞操作，如果连接不做数据读写操作会导致**线程阻塞**，浪费资源 
         * 2、如果线程很多，会导致服务器线程太多，压力太大。
 
-### NIO(Non Blocking IO)
+### 1.3. NIO(Non Blocking IO)
 * 说到NIO，一个是jdk中新的New IO包，另一个就是Non BlockingIO
 * 代码里不再阻塞，如果**accept或read不到就返回-1**，accept得到就返回结果，但是自己在代码里循环遍历取一边目前存在的所有**连接的状态**；
 * 缺点：如果存在10000个连接，只有1个连接此时正在发消息，那么也得遍历这10000个找到这个发消息的连接，这样从代码里循环调用，会频繁涉及到10000次系统调用（向内核空间发送请求），那么时间消耗非常多；
         * 因此，NIO多路复用器出现了；
-#### select、epoll
+
+#### 1.3.1. select、epoll
 * select、poll的诞生
 * 为了解决频繁系统调用的问题，select、poll的出现，让你只用调用一次select方法，发送一次系统请求并传递所有连接的fd数组，然后内核自己去内部轮询遍历所有的连接，把有对应状态操作的连接给你找回来返回，这样**大大减少了系统调用的次数**
 * 实现：select数组，最大连接有上限；poll链表，最大连接无上限；
 * 缺点：每次select、poll都需要重复传递所有连接的fd数组；每次select、poll都需要重新遍历全量的连接fd；
         * 因此epoll出现了；
-#### epoll
+
+#### 1.3.2. epoll
 * 为了解决重复传递fd的问题  -> 内存开辟了空间保留fd
 * 为了解决重复遍历的问题 -> 使用了中断机制、callback机制
         * 事件通知的方式，每当有IO事件就绪，系统注册的回调函数就会被调用；
@@ -49,7 +77,8 @@ select-poll-epoll多路复用
 I/O多路复用（multiplexing）的本质是通过一种机制（系统内核缓冲I/O数据），让单个进程可以监视多个文件描述符,
 一旦某个描述符就绪（一般是读就绪或写就绪），能够通知程序进行相应的读写操作
 ```
-### 基础概念
+
+### 1.4. 基础概念
 * 用户空间 / 内核空间
   * 现在操作系统都是采用虚拟存储器，那么对32位操作系统而言，它的寻址空间（虚拟存储空间）为4G（2的32次方）。
   * 操作系统的核心是内核，独立于普通的应用程序，可以访问**受保护的内存空间**，也有访问**底层硬件设备**的所有权限。为了保证用户进程不能直接操作内核（kernel），保证内核的安全，操作系统将虚拟空间划分为两部分，一部分为内核空间，一部分为用户空间。
@@ -63,7 +92,7 @@ I/O多路复用（multiplexing）的本质是通过一种机制（系统内核�
 * 缓存I/O
   * 缓存I/O又称为标准I/O，大多数文件系统的默认I/O操作都是缓存I/O。在Linux的缓存I/O机制中，操作系统会将I/O的数据缓存在文件系统的页缓存中，即数据会**先被拷贝到操作系统内核的缓冲区中**，然后才会**从操作系统内核的缓冲区拷贝到应用程序的地址空间**。
 
-### Select
+### 1.5. Select
 ```
 int select(int maxfdp1,fd_set *readset,fd_set *writeset,fd_set *exceptset,const struct timeval *timeout);
 ```
@@ -90,7 +119,7 @@ int select(int maxfdp1,fd_set *readset,fd_set *writeset,fd_set *exceptset,const 
 * poll的机制与select类似，与select在本质上没有多大差别，管理多个描述符也是进行轮询，根据描述符的状态进行处理，但是poll没有最大文件描述符数量的限制。**poll只解决了上面的问题3**，并没有解决问题1，2的性能开销问题。
 * poll改变了文件描述符集合的描述方式，使用了**pollfd结构**而不是select的fd_set结构，使得poll支持的文件描述符集合限制远大于select的1024；
 
-### Epoll
+### 1.6. Epoll
 ```
 int epoll_create(int size);
 int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
@@ -99,14 +128,15 @@ int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout
 * epoll在Linux2.6内核正式提出，是基于事件驱动的I/O方式，相对于select来说，epoll没有描述符个数限制，使用一个文件描述符管理多个描述符，将用户关心的文件描述符的事件存放到内核的一个事件表中，这样在**用户空间和内核空间的copy**只需一次。
 * select 和 poll 监听文件描述符list，进行一个线性的查找 O(n)
   epoll: 使用了内核文件级别的回调机制O(1)
-#### epoll步骤
+
+#### 1.6.1. epoll步骤
 1、执行epoll_create()时，创建了**红黑树**和**就绪链表**；
 
 2、执行epoll_ctl()时，如果增加socket句柄，则检查在红黑树中是否存在，存在立即返回，不存在则添加到树干上，然后向内核注册回调函数，用于当中断事件来临时向准备就绪链表中插入数据；
 
 3、执行epoll_wait()时立刻返回准备就绪链表里的数据即可。
 
-#### 底层数据结构
+#### 1.6.2. 底层数据结构
 epoll使用RB-Tree红黑树去监听并维护所有文件描述符，RB-Tree的根节点
 
 * 我们在调用epoll_create时，内核除了帮我们在epoll文件系统里建了个file结点，在内核cache里建了个红黑树用于存储以后epoll_ctl传来的socket外，还会再建立一个rdllist双向链表，用于存储准备就绪的事件，当epoll_wait调用时，仅仅观察这个rdllist双向链表里有没有数据即可。有数据就返回，没有数据就sleep，等到timeout时间到后即使链表没数据也返回。所以，epoll_wait非常高效；
@@ -114,21 +144,23 @@ epoll使用RB-Tree红黑树去监听并维护所有文件描述符，RB-Tree的�
 * 而且，通常情况下即使我们要监控百万计的句柄，大多一次也只返回很少量的准备就绪句柄而已，所以，epoll_wait仅需要从内核态copy少量的句柄到用户态而已.
 
 ![img](https://img-blog.csdnimg.cn/20181108145440376.png)
-#### 边沿触发vs水平触发
+
+#### 1.6.3. 边沿触发vs水平触发
 * epoll事件有两种模型，边沿触发：edge-triggered (ET)， 水平触发：level-triggered (LT)
 
-##### 水平触发(level-triggered)
+##### 1.6.3.1. 水平触发(level-triggered)
 
 * socket接收缓冲区不为空 有数据可读 读事件一直触发
 * socket发送缓冲区不满 可以继续写入数据 写事件一直触发
-##### 边沿触发(edge-triggered)
+
+##### 1.6.3.2. 边沿触发(edge-triggered)
 
 * socket的接收缓冲区状态变化时触发读事件，即空的接收缓冲区刚接收到数据时触发读事件
 * socket的发送缓冲区状态变化时触发写事件，即满的缓冲区刚空出空间时触发读事件
 
 * 边沿触发仅触发一次，水平触发会一直触发。
 
-### 区别
+### 1.7. 区别
 ```
         select	poll	epoll
 操作方式	遍历	遍历	回调
@@ -146,7 +178,7 @@ fd拷贝	每次调用select，都需要把fd集合从用户态拷贝到内核态
 https://blog.csdn.net/u011671986/article/details/79449853
 
 
-### AIO（NIO2.0）
+### 1.8. AIO（NIO2.0）
 * 异步非阻塞， 由操作系统完成后回调通知服务端程序启动线程去处理， 一般适用于连接数较多且连接时间较长的应用
 * AIO方式适用于连接数目多且连接比较长(重操作) 的架构，JDK7 开始支持
 
