@@ -57,4 +57,17 @@
 * 可以使用<phase>指定某个阶段使用哪个插件
   
 ### 依赖管理
-* Maven
+* Maven依赖管理具有**传递性**：项目依赖a.jar，a.jar又依赖b.jar，那么项目自动管理这种依赖。
+* 使用<exclusions.../>可以排除指定的依赖
+``` pom
+<dependency>
+   <groupId>javax.activation</groupId>
+   <artifactId>mail<artifactId/>
+   <type>jar</type>
+   <exclusions>
+       <exclusion>
+           <artifactId>activation.kk<artifactId/>
+       </exclusion>
+   </exclusions>
+</dependency>
+```
