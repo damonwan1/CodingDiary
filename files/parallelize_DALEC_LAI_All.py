@@ -172,7 +172,9 @@ if __name__ == "__main__":
   # ======================================================================================
   # 1、数据容器：驱动数据 &观测数据。
   # all
-  path_all = 'hdfs:///user/root/Data/data_LAI' + strFlag + '.csv'
+  
+  #path_all = 'hdfs:///user/root/Data/data_LAI' + strFlag + '.csv'
+  path_all = '/CodingDiary/files/data_test.csv'
   all_RDD_data = sc.textFile(path_all).take(2)
   #
   all_List = [map(float, e.split(',')) for e in all_RDD_data]

@@ -348,11 +348,18 @@ def save_Traces(traces, out_flag, parameters, o_List):
   path_flag = 'out_All_%s.txt' %(out_flag)
   # 定义HDFS数据源，并写入。
   #hdfs = PyWebHdfsClient(host='192.168.1.20', port='50070', user_name='hadoop') # 家里
-  hdfs = PyWebHdfsClient(host='192.168.16.217', port='50070', user_name='root') # 所里
-  path_flag = '/user/root/Out20200702/' + path_flag
-  print ('参数轨迹：[hdfs]', path_flag)
+  
+  #hdfs = PyWebHdfsClient(host='192.168.16.217', port='50070', user_name='root') # 所里
+  #path_flag = '/user/root/Out20200702/' + path_flag
+  
+  #path_flag = '/test/out/' + path_flag
+  print ('参数轨迹：', path_flag)
+  
   #print (traces_out)
-  hdfs.create_file(path_flag, traces_out, overwrite=True)
+  #hdfs.create_file(path_flag, traces_out, overwrite=True)
+  with open(path_flag, 'w') as file_object:
+    file_object.write(traces_out)
+  
   # =====================================================================================================
   # 存储1:1 线图。
   # 对象：[[k, aifa, Pmax, tmin, tmax, topt, beta], Ta, PAR, RH, VPD, Clit_0, Csom_0]。  # LAI: obs
@@ -366,12 +373,14 @@ def save_Traces(traces, out_flag, parameters, o_List):
   #R'''
   path_simulation = 'simulation_%s.csv' %(out_flag)
   # 写入HDFS文件。  
-  path_simulation = '/user/root/Out20200702/' + path_simulation                        
-  print ('模拟数据：[hdfs]', path_simulation)
+  path_simulation = '/test/out/' + path_simulation                        
+  print ('模拟数据：', path_simulation)
   #print (results)
   #with open('./out.csv', 'w') as f:
   #  f.write(results)
-  hdfs.create_file(path_simulation, results, overwrite=True)
+  #hdfs.create_file(path_simulation, results, overwrite=True)
+  with open(path_simulation, 'w') as file_object:
+    file_object.write(results)
   # =====================================================================================================
   print ('存储结束 ')
 
