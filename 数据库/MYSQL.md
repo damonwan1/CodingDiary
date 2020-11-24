@@ -85,7 +85,7 @@ mysql> select SQL_CACHE * from T where ID=10；
 * 开始执行语句。
     * 开始执行的时候，要先判断一下你对这个表 T 有没有执行查询的权限，如果没有，就会返回没有权限的错误；
     * 如果有权限，就打开表继续执行。打开表的时候，执行器就会根据表的引擎定义，去使用这个**引擎提供的接口**
-* 数据库的慢查询日志中看到一个 rows_examined 的字段，表示这个语句执行过程中扫描了多少行，在有些场景下，执行器调用一次，在引擎内部则扫描了多行，**因此引擎扫描行数跟 rows_examined 并不是完全相同的**；
+* 数据库的慢查询日志中看到一个 rows_examined 的字段，表示这个语句执行过程中扫描了多少行（应该是调用多少次接口吧？），在有些场景下，执行器调用一次，在引擎内部则扫描了多行，**因此引擎扫描行数跟 rows_examined 并不是完全相同的**；
 
 #### .1.6. 存储引擎
 * MyISAM、InnoDB、Memory
@@ -106,18 +106,21 @@ mysql> select SQL_CACHE * from T where ID=10；
 
 #### .2.1. 重做日志 redo log （InnoDB引擎的日志）
 * 类比记忆：孔乙己的酒馆，先黑板记账，后台还有一个账本，这叫WAL(Weite-Ahead Logging)；redo log就相当于黑板
-* redo log包括两部分：一是内存中的**日志缓冲(redo log buffer)**，该部分日志是易失性的；二是磁盘上的**重做日志文件(redo log file)**，该部分日志是持久的。
+    * WAL 的全称是 Write-Ahead Logging，它的关键点就是**先写日志，再写磁盘**，也就是先写粉板，等不忙的时候再写账本
+* redo log包括两部分：一是内存中的**日志缓冲(redo log buffer)**，该部分日志是易失性的(该部分一般几M最多)；二是磁盘上的**重做日志文件(redo log file)**，该部分日志是持久的（下面所指的redo log都是磁盘上的redo log file）。
+    * [redo log buffer 介绍](https://blog.csdn.net/weixin_33937499/article/details/90253847)
 * 原因：如果每一次的**更新操作**都需要写进磁盘，然后磁盘也要找到对应的那条记录，然后再更新，整个过程 IO 成本、查找成本都很高；使用Redolog是顺序写，并且可以组提交，还有别的一些优化，收益最大是是这两个因素；
 * 记录类型：Redo log不是记录数据页“更新之后的状态”，而是记录这个页**做了什么改动**
     * 记录普通数据页的改动；
     * 记录change buffer的改动
 ![redo log](https://static001.geekbang.org/resource/image/16/a7/16a7950217b3f0f4ed02db5db59562a7.png)
+* InnoDB 的 redo log 是固定大小的，比如可以配置为一组 4 个文件，每个文件的大小是 1GB，那么这块“粉板”总共就可以记录**4GB** 的操作。
 * write pos 是当前记录的位置，一边写一边后移，写到第 3 号文件末尾后就回到 0 号文件开头。checkpoint 是当前要擦除的位置，也是往后推移并且循环的，擦除记录前要把记录更新到数据文件。
 * write pos 和 checkpoint 之间的是“粉板”上还空着的部分，可以用来记录新的操作。如果 write pos 追上 checkpoint，表示“粉板”满了，这时候不能再执行新的更新，得停下来先擦掉一些记录，把 checkpoint 推进一下。
 * 思想：有了 redo log，InnoDB 就可以保证即使数据库发生异常重启，之前提交的记录都不会丢失，这个能力称为 **crash-safe**
 
 #### .2.2. 归档日志 binlog （Server层的日志）
-* 记录类型：Binlog有两种模式，statement格式的话是记sql语句， row格式（推荐）会记录行的内容，记两条，更新前和更新后都有。
+* 记录类型：Binlog有两种模式，**statement格式的话是记sql语句， row格式（推荐）会记录行的内容，记两条，更新前和更新后都有**。
 * binlog和redolog 区别？
     * redo log 是**物理日志**，记录的是“在某个数据页上做了什么修改”；binlog 是**逻辑日志**，记录的是**这个语句的原始逻辑**，比如“给 ID=2 这一行的 c 字段加 1 ”
     * redo log 是**循环写的**，空间固定会用完；binlog 是可以**追加写入**的。“追加写”是指 binlog 文件写到一定大小后会切换到下一个，并不会覆盖以前的日志。
@@ -145,7 +148,7 @@ mysql> select SQL_CACHE * from T where ID=10；
 #### .3.2. 启动方式
 * 显示启动，begin或start transaction / start transaction with consistent snapshot；提交：commit；回滚：rollback；
     * begin或start transaction，一致性视图是在执行**第一个快照__读__语句**时创建的；
-    * tart transaction with consistent snapshot, 一致性视图是在执行 start transaction with consistent snapshot 时创建的。
+    * start transaction with consistent snapshot, 一致性视图是在**执行 start transaction with consistent snapshot 时创建的**。
 * set autocommit = 1，自动提交事务； = 0，不会自动提交，哪怕只执行一个select这个事务将一直存在，直到下一次的commit（导致长事务）；
 * 建议使用 set autocommit = 1；
 * 频繁使用的场景下，减少一次交互，可以使用 commit work and chain（提交事务并自动启动下一个事务，不用再begin了）
@@ -160,6 +163,7 @@ select * from information_schema.innodb_trx where TIME_TO_SEC(timediff(now(),trx
 
 #### .3.4. 隔离性
 * 多个事务同时执行会出现脏读（dirty read）、不可重复读（non-repeatable read）、幻读（phantom read）的问题，解决这些问题就出现**隔离级别**的概念。
+    * [三种详解](https://blog.csdn.net/lonely_bin/article/details/96175384?utm_medium=distribute.pc_relevant_t0.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase&depth_1-utm_source=distribute.pc_relevant_t0.none-task-blog-BlogCommendFromMachineLearnPai2-1.nonecase)
 * 事务隔离级别包括：读未提交（read uncommitted）、读提交（read committed）、可重复读（repeatable read）和串行化（serializable)
     * 读未提交是指，一个事务还没提交时，它做的变更就能被别的事务看到。
     * 读提交是指，一个事务提交之后，它做的变更才会被其他事务看到。
